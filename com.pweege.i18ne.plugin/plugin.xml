@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="I18ne Editor"
+            extensions="properties"
+            icon="icons/sample.gif"
+            contributorClass="com.pweege.i18ne.plugin.editors.I18neEditorContributor"
+            class="com.pweege.i18ne.plugin.editors.I18neEditor"
+            id="com.pweege.i18ne.plugin.editors.I18neEditor">
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            name="I18ne Editor Wizards"
+            id="com.pweege.i18ne.plugin">
+      </category>
+      <wizard
+            name="I18ne Editor file"
+            icon="icons/sample.gif"
+            category="com.pweege.i18ne.plugin"
+            class="com.pweege.i18ne.plugin.wizards.I18neNewWizard"
+            id="com.pweege.i18ne.plugin.wizards.I18neNewWizard">
+      </wizard>
+   </extension>
+
+</plugin>
