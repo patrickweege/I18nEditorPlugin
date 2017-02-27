@@ -12,25 +12,29 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.internal.ui.propertiesfileeditor.PropertiesFileEditor;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FontDialog;
-import org.eclipse.ui.*;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorSite;
+import org.eclipse.ui.IFileEditorInput;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.editors.text.TextEditor;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
-import org.eclipse.ui.ide.IDE;
 
 /**
  * An example showing how to create a multi-page editor.
@@ -62,17 +66,13 @@ public class I18neEditor extends MultiPageEditorPart implements IResourceChangeL
 	 * Creates page 0 of the multi-page editor,
 	 * which contains a text editor.
 	 */
-	void createPage0() {
+	void createEditors() {
 		try {
-			editor = new TextEditor();
+			editor = new PropertiesFileEditor();
 			int index = addPage(editor, getEditorInput());
 			setPageText(index, editor.getTitle());
 		} catch (PartInitException e) {
-			ErrorDialog.openError(
-				getSite().getShell(),
-				"Error creating nested text editor",
-				null,
-				e.getStatus());
+			ErrorDialog.openError(getSite().getShell(), "Error creating nested text editor", null, e.getStatus());
 		}
 	}
 	/**
@@ -81,26 +81,19 @@ public class I18neEditor extends MultiPageEditorPart implements IResourceChangeL
 	 */
 	void createPage1() {
 
-		Composite composite = new Composite(getContainer(), SWT.NONE);
-		GridLayout layout = new GridLayout();
-		composite.setLayout(layout);
-		layout.numColumns = 2;
+		SashForm page1Composite = new SashForm(getContainer(), SWT.VERTICAL);
+		//Composite page1Composite = new Composite(getContainer(), SWT.NONE);
+		page1Composite.setLayout(new GridLayout(1, false));
 
-		Button fontButton = new Button(composite, SWT.NONE);
-		GridData gd = new GridData(GridData.BEGINNING);
-		gd.horizontalSpan = 2;
-		fontButton.setLayoutData(gd);
-		fontButton.setText("Change Font...");
+		FilterComposite filter = new FilterComposite(page1Composite);
 		
-		fontButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				setFont();
-			}
-		});
-
-		int index = addPage(composite);
+		final Label labelA = new Label(page1Composite, SWT.BORDER | SWT.CENTER);
+	    labelA.setText("Botton");		
+		
+		int index = addPage(page1Composite);
 		setPageText(index, "Properties");
 	}
+	
 	/**
 	 * Creates page 2 of the multi-page editor,
 	 * which shows the sorted text.
@@ -118,8 +111,9 @@ public class I18neEditor extends MultiPageEditorPart implements IResourceChangeL
 	/**
 	 * Creates the pages of the multi-page editor.
 	 */
+	@Override
 	protected void createPages() {
-		createPage0();
+		createEditors();
 		createPage1();
 		createPage2();
 	}
@@ -128,6 +122,7 @@ public class I18neEditor extends MultiPageEditorPart implements IResourceChangeL
 	 * <code>IWorkbenchPart</code> method disposes all nested editors.
 	 * Subclasses may extend.
 	 */
+	@Override
 	public void dispose() {
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 		super.dispose();
@@ -135,6 +130,7 @@ public class I18neEditor extends MultiPageEditorPart implements IResourceChangeL
 	/**
 	 * Saves the multi-page editor's document.
 	 */
+	@Override
 	public void doSave(IProgressMonitor monitor) {
 		getEditor(0).doSave(monitor);
 	}
@@ -143,6 +139,7 @@ public class I18neEditor extends MultiPageEditorPart implements IResourceChangeL
 	 * Also updates the text for page 0's tab, and updates this multi-page editor's input
 	 * to correspond to the nested editor's.
 	 */
+	@Override
 	public void doSaveAs() {
 		IEditorPart editor = getEditor(0);
 		editor.doSaveAs();
@@ -160,21 +157,25 @@ public class I18neEditor extends MultiPageEditorPart implements IResourceChangeL
 	 * The <code>MultiPageEditorExample</code> implementation of this method
 	 * checks that the input is an instance of <code>IFileEditorInput</code>.
 	 */
-	public void init(IEditorSite site, IEditorInput editorInput)
-		throws PartInitException {
+	@Override
+	public void init(IEditorSite site, IEditorInput editorInput) throws PartInitException {
 		if (!(editorInput instanceof IFileEditorInput))
 			throw new PartInitException("Invalid Input: Must be IFileEditorInput");
 		super.init(site, editorInput);
 	}
+
 	/* (non-Javadoc)
 	 * Method declared on IEditorPart.
 	 */
+	@Override
 	public boolean isSaveAsAllowed() {
 		return true;
 	}
+	
 	/**
 	 * Calculates the contents of page 2 when the it is activated.
 	 */
+	@Override
 	protected void pageChange(int newPageIndex) {
 		super.pageChange(newPageIndex);
 		if (newPageIndex == 2) {
@@ -184,6 +185,7 @@ public class I18neEditor extends MultiPageEditorPart implements IResourceChangeL
 	/**
 	 * Closes all project files on project close.
 	 */
+	@Override
 	public void resourceChanged(final IResourceChangeEvent event){
 		if(event.getType() == IResourceChangeEvent.PRE_CLOSE){
 			Display.getDefault().asyncExec(new Runnable(){
